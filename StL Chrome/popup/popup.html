@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <script src="popup.js" defer></script>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <form>
+    <label><input type="checkbox"id="preamble"> Include preamble (select if you don't have a title page or template). </label>
+    <br><label><input type="checkbox"id="gradetable"> Include gradetable. </label>
+    <br><label><input type="checkbox"id="intro" checked> Add the scilympiad introduction to the document.</label>
+    <br><label><input type="checkbox"id="conclusion" checked> Add the scilympiad conclusion to the document. </label>
+    <br><label><input type="checkbox"id="images" checked> Download all images in the test.</label>
+    <br><label><input type="checkbox"id="removeChevrons" checked> Remove all HTML remnants (removes all characters between &gt; or &lt;).</label>
+    <br><label><input type="checkbox"id="selectall" checked> Automatically append select all that apply to multiple select questions.</label>
+    <br><select id="mc">
+      <option value="choices">choices</option>
+      <option value="oneparchoices">oneparchoices</option>
+      <option value="checkboxes">checkboxes</option>
+      <option value="oneparcheckboxes">oneparcheckboxes</option>
+    </select><label for="mc">  Select which environment to use for multiple choice questions </label>
+    <br><select id="tf">
+      <option value="choices">choices</option>
+      <option value="oneparchoices">oneparchoices</option>
+      <option value="checkboxes">checkboxes</option>
+      <option value="oneparcheckboxes">oneparcheckboxes</option>
+    </select><label for="tf">  Select which environment to use for true/false questions </label>
+    <br><select id="ms">
+      <option value="choices">choices</option>
+      <option value="oneparchoices">oneparchoices</option>
+      <option value="checkboxes">checkboxes</option>
+      <option value="oneparcheckboxes">oneparcheckboxes</option>
+    </select><label for="ms">  Select which environment to use for multiple select questions </label>
+    <br><select id="sa">
+      <option value="solutionbox">solutionbox</option>
+      <option value="solution">solution</option>
+      <option value="solutionorbox">solutionorbox</option>
+      <option value="solutionorlines">solutionorlines</option>
+      <option value="solutionordottedlines">solutionordottedlines</option>
+      <option value="solutionorgrid">solutionorgrid</option>
+    </select><label for="sa">  Select which environment to use for short answer questions </label>
+    <br><button type="submit" id="generate">Generate</button>
+
+  </form>
+</body>
+
+</html>

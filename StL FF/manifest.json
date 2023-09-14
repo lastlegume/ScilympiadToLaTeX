@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "ScilympiadToLaTeX",
+  "version": "1.4.1",
+  "description": "Converts a scilympiad test into LaTeX code",
+  "icons": {
+    "48": "icons/stl logo.png"
+  },
+  
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  
+  "browser_action": {
+    "default_icon": "icons/stl logo.png",
+    "default_title": "Generate",
+    "default_popup": "popup/popup.html"
+  }
+  
+  
+  
+  
+  
+}

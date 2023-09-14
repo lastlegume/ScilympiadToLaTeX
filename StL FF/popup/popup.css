@@ -1,0 +1,21 @@
+button{
+    background-color: aquamarine;
+    transition-duration: .5s;
+    cursor: pointer;
+    text-align: center;
+}
+button:hover{
+    color:white;
+}
+button:active{
+    box-shadow: 0 1px #666;
+}
+html {
+    min-height: 5em;
+    min-width: 25em;
+    line-height: 1.5;
+}
+body, select, button{
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: smaller;
+}
