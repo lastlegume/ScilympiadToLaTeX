@@ -1,11 +1,18 @@
+const extra = document.getElementById("extra");
+const template = document.getElementById("template");
 
 document.querySelector("form").addEventListener("submit", generateLaTeX);
+template.addEventListener("change", toggleVisibility);
 
+function toggleVisibility() {
+    extra.hidden = !extra.hidden;
+}
 
 async function generateLaTeX(e) {
     e.preventDefault();
     let queryOptions = { active: true, lastFocusedWindow: true };
-    let [tab] = await chrome.tabs.query(queryOptions);
+    let [tab] = await browser.tabs.query(queryOptions);
+
     var mc = document.getElementById("mc").value;
     var ms = document.getElementById("ms").value;
     var tf = document.getElementById("tf").value;
@@ -17,29 +24,44 @@ async function generateLaTeX(e) {
     var images = document.getElementById("images").checked;
     var removeChevrons = document.getElementById("removeChevrons").checked;
     var selectall = document.getElementById("selectall").checked;
+    if (template.checked) {
+        preamble = false;
+        gradetable = false;
+    }
 
-    chrome.scripting.executeScript({
+    browser.scripting.executeScript({
         target: { tabId: tab.id },
         func: create,
         args: [mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall],
     });
 }
-function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall) {
+async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall) {
     var questions = document.getElementsByClassName("panel panel-default");
     var began = false;
-    var code = "% This text was generated using the ScilympiadToLaTeX extension on the Firefox Add-Ons Store at https://addons.mozilla.org/en-US/firefox/addon/scilympiadtolatex/ \n%This extension does not support math, different fonts, different paragraph spacings, or proper image placement. For instance, images might be on wrong pages and solution boxes may be incorrectly sized. Please look through the test and resize figures or add page breaks where needed.  \n" + (preamble ? "\\documentclass{exam}\n\\usepackage{graphicx}\n% You can remove the hyperref package if the test doesn't have hyperlinks \n\\usepackage{hyperref}\n\\usepackage[T1]{fontenc}\n% You can remove setspace if you don't change the line spacing\n\\usepackage{setspace}\n" + (gradetable ? "\\usepackage{mhchem}\n" : "") + "\\addpoints\n\\begin{document}\n\n% This space is intentionally left blank for a title page.\n" : "% Please verify that \\usepackage{graphicx} (for images) " + (gradetable ? "and \\usepackage{mhchem} (for the gradetable resizing) are " : "is ") + "in the preamble if there are images within your test \n% Please verify that \\usepackage{hyperref} is in the preamble if there are hyperlinks within your test \n\n");
-
-    if (gradetable) {
-        code += "% The number of rows in the grade table is determined by the number of questions. You will probably need to adjust it to better fit the document.\n\\multirowgradetable{\\numpages/9}[pages]\n\n";
+    var code = "";
+    if (template.checked) {
+        var templateText = await fetch("template.txt");
+        templateText = templateText.text();
+        code = templateText;
+    } else {
+        code = "% This text was generated using the ScilympiadToLaTeX extension on the Firefox Add-Ons Store at https://addons.mozilla.org/en-US/firefox/addon/scilympiadtolatex/ \n%This extension does not support math, different fonts, different paragraph spacings, or proper image placement. For instance, images might be on wrong pages and solution boxes may be incorrectly sized. Please look through the test and resize figures or add page breaks where needed.  \n" + (preamble ? "\\documentclass{exam}\n\\usepackage{graphicx}\n% You can remove the hyperref package if the test doesn't have hyperlinks \n\\usepackage{hyperref}\n\\usepackage[utf8]{fontenc}\n% You can remove setspace if you don't change the line spacing\n\\usepackage{setspace}\n" + (gradetable ? "\\usepackage{mhchem}\n" : "") + "\\addpoints\n\\begin{document}\n\n% This space is intentionally left blank for a title page.\n" : "% Please verify that \\usepackage{graphicx} (for images) " + (gradetable ? "and \\usepackage{mhchem} (for the gradetable resizing) are " : "is ") + "in the preamble if there are images within your test \n% Please verify that \\usepackage{hyperref} is in the preamble if there are hyperlinks within your test \n\n");
+        if (gradetable) {
+            code += "% The number of rows in the grade table is determined by the number of questions. You will probably need to adjust it to better fit the document.\n\\multirowgradetable{\\numpages/9}[pages]\n\n";
+        }
     }
+
     if (intro) {
         intro = document.getElementsByClassName("form-horizontal")[0].children[3].innerHTML;
-        code += "% This is the introduction text \n" + clean(insertEscapes(intro)) + " \n\n";
+        if (template.checked) {
+            code = code.replaceAll('<####?->Intro will be copied here<-?####>', "% This is the introduction text \n \item " + clean(insertEscapes(intro)) + " \n");
+        } else {
+            code += "% This is the introduction text \n" + clean(insertEscapes(intro)) + " \n\n";
+        }
     }
     if (preamble) {
         code += "\\newpage\n\n";
     }
-
+    var questionText = "";
     for (let i = 0; i < questions.length; i++) {
         var question = questions[i].innerHTML.toString();
         //question = questions[i].innerText;
@@ -83,14 +105,14 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             start += 7;
             if (question.substring(start, start + 12) === "text-warning") {
                 //short answer
-                answer += "\\begin{"+sa+"}";
+                answer += "\\begin{" + sa + "}";
                 var expected = start + 38;
                 while (expected < question.length && question.substring(expected, expected + 6) !== "</div>")
                     expected++;
                 let size = Math.min(6, Math.max(2, Math.round((expected - start - 38) / 100) + 1));
-                answer += ((sa.includes("solutionbox"))?"{":"[") + size + "cm"+((sa.includes("solutionbox"))?"}":"]")+" \n";
+                answer += ((sa.includes("solutionbox")) ? "{" : "[") + size + "cm" + ((sa.includes("solutionbox")) ? "}" : "]") + " \n";
                 answer += question.substring(start + 38, expected);
-                answer += "\n\\end{"+sa+"}";
+                answer += "\n\\end{" + sa + "}";
             } else if (question.substring(start, start + 8) === "input-sm") {
                 //fill in the blank
                 answer += "\\\\\n\\fillin[";
@@ -106,8 +128,8 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             } else if (question.substring(start, start + 5) === "radio") {
                 //true false and multiple choice
                 var choices = questions[i].children[1].innerHTML.toString();
-                var truefalse = !choices.includes("\"clear:both;\"")&&choices.includes("True")&&choices.includes("False")&&!choices.includes("A)");
-                if(truefalse)
+                var truefalse = !choices.includes("\"clear:both;\"") && choices.includes("True") && choices.includes("False") && !choices.includes("A)");
+                if (truefalse)
                     answer += ((tf.includes("onepar")) ? "\\\\" : "") + "\\begin{" + tf + "}\n"
                 else
                     answer += ((mc.includes("onepar")) ? "\\\\" : "") + "\\begin{" + mc + "}\n"
@@ -158,11 +180,11 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     }
                     inStart = newInStart;
                 }
-                if(truefalse)
+                if (truefalse)
                     answer += "\\end{" + tf + "}"
                 else
                     answer += "\\end{" + mc + "}"
-                
+
             } else if (question.substring(start, start + 8) === "checkbox") {
                 //multiple select
                 if (selectall)
@@ -227,15 +249,23 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             LaTeX = LaTeX.toString().replaceAll('\"', '\\\"');
             LaTeX = LaTeX.toString().replaceAll('&quot;', '\\\"');
             LaTeX = LaTeX.toString().replaceAll('\'', '\\\'');
-            code += LaTeX + "\n";
+            questionText += LaTeX + "\n";
         }
         else {
             //   console.log(question);
-            code += "" + clean(question) + "\n";
+            var textblock = clean(question);
+            textblock = textblock.replaceAll("\\begin{figure}", "}\n\\begin{figure}").replaceAll("\\end{figure}", "\\end{figure}\n\\fullwidth{");
+            questionText += "\\fullwidth{" + textblock + "}\n";
         }
     }
+    if (template.checked) {
+        code = code.replaceAll('<####?->Questions will be copied here<-?####>', questionText);
+    } else {
+        code += questionText;
+        code += "\\end{questions}\n";
+    }
 
-    code += "\\end{questions}\n";
+
     if (conclusion) {
         var conc = document.getElementsByClassName("panel panel-success");
         if (conc.length > 0) {
@@ -244,7 +274,11 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             while (conc.substring(idx, idx + 1) !== ">") {
                 idx++;
             }
-            code += "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n";
+            if (template.checked) {
+                code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n");
+            } else {
+                code += "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n";
+            }
         }
     }
     //end of document
@@ -253,6 +287,9 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
     //   console.log(code);
     if (removeChevrons)
         code = code.toString().replaceAll(/<[^<>]*?>\s?/g, "");
+    code = code.toString().replaceAll('&lt;', '<');
+    code = code.toString().replaceAll('&gt;', '>');
+
     var file = new File([code], 'latex.txt', {
         type: 'text/plain',
     })
@@ -322,14 +359,6 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             if (j + 2 < qText.length) {
                 if (qText.substring(j, j + 4) === "<br>") {
                     qText = qText.substring(0, j) + (j + 5 > qText.length ? "\\\\" : "") + "\n" + qText.substring(j + 4);
-                    j -= 5;
-                }
-                if (qText.substring(j, j + 4) === "&gt;") {
-                    qText = qText.substring(0, j) + "<" + qText.substring(j + 4);
-                    j -= 5;
-                }
-                if (qText.substring(j, j + 4) === "&lt;") {
-                    qText = qText.substring(0, j) + ">" + qText.substring(j + 4);
                     j -= 5;
                 }
                 if (qText.substring(j, j + 4) === "</p>") {

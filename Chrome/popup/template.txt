@@ -1,0 +1,92 @@
+\documentclass[addpoints]{exam}
+\usepackage[utf8]{inputenc}
+% Needed to insert images
+\usepackage{graphicx}
+% Needed for the red highlight for correct answers
+\usepackage{color}
+% Needed for chemical reactions/equations
+%\usepackage{chemmacros}
+\usepackage[version=4]{mhchem}
+% Needed for circuit diagrams
+%\usepackage{circuitikz}
+% Needed for hyperlinks
+\usepackage{hyperref}
+% Only needed if paragraph spacing is varied
+\usepackage{setspace}
+
+% When not commented, \printanswers will show all of the answers to questions and change some other things
+%\printanswers
+
+% Change "Event" to the name of the event
+\newcommand{\event}{Event}
+% Change "Tournament" to the name of the tournament
+\newcommand{\tournament}{Tournament}
+
+% Sets the default length of a fill in the blank line to the 
+\setlength\fillinlinelength{\textwidth}
+% Makes correct answers appear both red and bold when print answers is active
+\CorrectChoiceEmphasis{\color{red}\bfseries}
+\SolutionEmphasis{\color{red}\bfseries}
+
+% Makes the fillin lines appear lower 
+\setlength\answerclearance{2pt}
+
+% Creates the header and footer
+\pagestyle{headandfoot}
+% Adds a line to the top of the page
+\runningheadrule
+% The three braces correspond to the different parts of the header: the left is the top left text, middle is top middle, and right is top right.
+\runningheader{\event}{\tournament}{Team Number:\hspace{1cm}}
+% Adds a line to the bottom of the page
+\runningfootrule
+% The three braces correspond to the different parts of the footer: the left is the bottom left text, middle is bottom middle, and right is bottom right.
+\runningfooter{}{Page \thepage\   of \numpages}{}
+
+\begin{document}
+\begin{center}
+    {\huge Science Olympiad \\ \event
+    % Writes key if the answers are shown, otherwise writes test
+    \ifprintanswers 
+     \space Key
+    \else 
+     \space Test
+    \fi \\ \vspace{3mm}\tournament\vspace{1mm}}
+\end{center}
+% Change to any picture or just some \vspace{.3\textheight} to leave it blank. [h] ensures that the image is placed in the same place in the document as in the code
+\begin{figure}[h]
+    \centering
+    % The braces include the reference to the image, so they must be changed to add/change to a new image 
+    \includegraphics[height=.3\textheight]{SLHS Logo.png}
+\end{figure}
+
+
+\begin{center}
+    Team Name: \ifprintanswers
+    \underline{\hspace{3.5cm}}\textbf{KEY}\underline{\hspace{5.5cm}}\\\vspace{5mm}
+    \else
+        \underline{\hspace{10cm}}\\ \vspace{5mm}
+    \fi
+    Team Number: \underline{\hspace{10cm}}\\ \vspace{5mm}
+\end{center}
+
+
+\noindent\textbf{\underline{Directions:}}
+\begin{itemize}
+    \item This is an instruction
+    \item Use \verb+\item+ to add more instructions
+    <####?->Intro will be copied here<-?####>
+\end{itemize}
+\begin{center}
+\textit{For grading use only}\\
+% The number of rows in the grade table is always one.  You will probably need to adjust it to better fit the document. 
+% A simple way to make it automatically update is to use \numpages/9 inside the braces ({}) with \usepackage[version=4]{mhchem} in the preamble. This is not very accurate because of the variance in question size, but it can serve as a starting point
+\multirowgradetable{1}[pages]    
+\end{center}
+
+\newpage
+
+<####?->Questions will be copied here<-?####>
+
+<####?->Conclusion will be copied here<-?####>
+
+\end{document}
