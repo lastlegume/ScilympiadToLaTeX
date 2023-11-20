@@ -692,6 +692,8 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
         qText = qText.toString().replaceAll('&Hat;', '\\textasciicircum');
         qText = qText.toString().replaceAll('{', '\\{');
         qText = qText.toString().replaceAll('}', '\\}');
+        qText = qText.toString().replaceAll('[', '\\[');
+        qText = qText.toString().replaceAll(']', '\\]');
         qText = qText.toString().replaceAll('&num;', '\\#');
         //    qText = qText.toString().replaceAll('&', '\\&');
         qText = qText.toString().replaceAll('&amp;', '\\&');
