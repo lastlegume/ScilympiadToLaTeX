@@ -59,7 +59,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
         } else {
             code += "% This is the introduction text \n" + clean(insertEscapes(intro)) + " \n\n";
         }
-    }else if (template){
+    } else if (template) {
         code = code.replaceAll('<####?->Intro will be copied here<-?####>', "");
     }
     if (preamble) {
@@ -74,7 +74,8 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
         question = insertEscapes(question.substring(44).trim());
         if (question.substring(0, 9) === "<div><div") {
             if (!began) {
-                code += "\\begin{questions}\n";
+                if (!template)
+                    code += "\\begin{questions}\n";
                 began = true;
             }
             question = question.substring(45).toString();
@@ -257,10 +258,9 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             questionText += LaTeX + "\n";
         }
         else {
-            //   console.log(question);
             var textblock = clean(question);
-            textblock = textblock.replaceAll("\\begin{figure}", "}\n\\begin{figure}").replaceAll("\\end{figure}", "\\end{figure}\n\\fullwidth{");
-            questionText += "\\fullwidth{" + textblock + "}\n";
+            textblock = textblock.replaceAll(/(.*?)(\\[begind]{3,5}{[\w\s]*?})/g, "\n\\fullwidth{$1}$2");
+            questionText += textblock + "\n";
         }
     }
     if (template) {
@@ -285,7 +285,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                 code += "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n";
             }
         }
-    }else if (template){
+    } else if (template) {
         code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "");
     }
     //end of document
@@ -336,19 +336,19 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     var start = j;
                     var styleStart = j + 8;
                     j = styleStart;
-                    while (j<qText.length&&qText.substring(j, j + 1) !== "\"")
+                    while (j < qText.length && qText.substring(j, j + 1) !== "\"")
                         j++;
                     var textStart = j;
-                    while (textStart<qText.length&&qText.substring(textStart, textStart + 1) !== ">")
+                    while (textStart < qText.length && qText.substring(textStart, textStart + 1) !== ">")
                         textStart++;
                     textStart++;
                     var textEnd = textStart;
-                    while (textEnd<qText.length&&qText.substring(textEnd, textEnd + 2) !== "</")
+                    while (textEnd < qText.length && qText.substring(textEnd, textEnd + 2) !== "</")
                         textEnd++;
                     var text = processStyle(qText.substring(styleStart, j), qText.substring(textStart, textEnd));
                     //    console.log(qText.substring(textStart, textEnd));
                     j = textEnd + 1;
-                    while (j<qText.length&&qText.substring(j, j + 1) !== ">")
+                    while (j < qText.length && qText.substring(j, j + 1) !== ">")
                         j++;
                     qText = qText.substring(0, start).trimEnd() + ">" + text + qText.substring(j + 1);
                     //  console.log("style " + qText);
@@ -427,7 +427,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     var imgString = qText.substring(imgStart, imgEnd).split("/").pop();
                     if (images)
                         downloadImage("https://scilympiad.com" + qText.substring(imgStart, imgEnd));
-                    qText = qText.substring(0, j - 1) + "\\begin{figure}[!ht]\n\t\\centering\n\t\\includegraphics[width=.7\\textwidth,height=.4\\textheight,keepaspectratio]{" + imgString + "}\n\\end{figure}\n" + qText.substring(idx + 1);
+                    qText = qText.substring(0, j - 1) + "\\begin{figure}[!ht]\n\t\\centering\n\t\\includegraphics[width=.6\\textwidth,height=.3\\textheight,keepaspectratio]{" + imgString + "}\n\\end{figure}\n" + qText.substring(idx + 1);
                     j -= 5;
                 }
 
@@ -565,18 +565,18 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     //   console.log('before: '+qText);
                     var spanStart = j;
                     var styleStart = j;
-                    while (styleStart<qText.length&&qText.substring(styleStart, styleStart + 7) !== "style=\"")
+                    while (styleStart < qText.length && qText.substring(styleStart, styleStart + 7) !== "style=\"")
                         styleStart++;
                     styleStart += 7;
                     j = styleStart;
-                    while (j<qText.length&&qText.substring(j, j + 1) !== "\"")
+                    while (j < qText.length && qText.substring(j, j + 1) !== "\"")
                         j++;
                     var textStart = j;
-                    while (textStart<qText.length&&qText.substring(textStart, textStart + 1) !== ">")
+                    while (textStart < qText.length && qText.substring(textStart, textStart + 1) !== ">")
                         textStart++;
                     textStart++;
                     var textEnd = textStart;
-                    while (textEnd<qText.length&&qText.substring(textEnd, textEnd + 7) !== "</span>")
+                    while (textEnd < qText.length && qText.substring(textEnd, textEnd + 7) !== "</span>")
                         textEnd++;
                     spanText = processStyle(qText.substring(styleStart, j), qText.substring(textStart, textEnd));
                     qText = qText.substring(0, spanStart) + spanText + qText.substring(textEnd + 7);
