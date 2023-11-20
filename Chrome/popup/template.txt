@@ -85,7 +85,11 @@
 
 \newpage
 
+\begin{questions}
+
 <####?->Questions will be copied here<-?####>
+
+\end{questions}
 
 <####?->Conclusion will be copied here<-?####>
 

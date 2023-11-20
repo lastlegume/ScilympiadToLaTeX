@@ -23,6 +23,9 @@ async function generateLaTeX(e) {
     var images = document.getElementById("images").checked;
     var removeChevrons = document.getElementById("removeChevrons").checked;
     var selectall = document.getElementById("selectall").checked;
+    var templateBoolean = template.checked;
+    var templateText = await fetch("template.txt");
+    templateText = await templateText.text();
     if (template.checked) {
         preamble = false;
         gradetable = false;
@@ -31,17 +34,16 @@ async function generateLaTeX(e) {
     browser.scripting.executeScript({
         target: { tabId: tab.id },
         func: create,
-        args: [mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall],
+        args: [mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall, templateBoolean, templateText],
     });
 }
 
-async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall) {
+function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall, template, templateText) {
     var questions = document.getElementsByClassName("panel panel-default");
     var began = false;
+
     var code = "";
-    if (template.checked) {
-        var templateText = await fetch("template.txt");
-        templateText = templateText.text();
+    if (template) {
         code = templateText;
     } else {
         code = "% This text was generated using the ScilympiadToLaTeX extension on the Firefox Add-Ons Store at https://addons.mozilla.org/en-US/firefox/addon/scilympiadtolatex/ \n%This extension does not support math, different fonts, different paragraph spacings, or proper image placement. For instance, images might be on wrong pages and solution boxes may be incorrectly sized. Please look through the test and resize figures or add page breaks where needed.  \n" + (preamble ? "\\documentclass{exam}\n\\usepackage{graphicx}\n% You can remove the hyperref package if the test doesn't have hyperlinks \n\\usepackage{hyperref}\n\\usepackage[utf8]{fontenc}\n% You can remove setspace if you don't change the line spacing\n\\usepackage{setspace}\n" + (gradetable ? "\\usepackage{mhchem}\n" : "") + "\\addpoints\n\\begin{document}\n\n% This space is intentionally left blank for a title page.\n" : "% Please verify that \\usepackage{graphicx} (for images) " + (gradetable ? "and \\usepackage{mhchem} (for the gradetable resizing) are " : "is ") + "in the preamble if there are images within your test \n% Please verify that \\usepackage{hyperref} is in the preamble if there are hyperlinks within your test \n\n");
@@ -52,16 +54,19 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
 
     if (intro) {
         intro = document.getElementsByClassName("form-horizontal")[0].children[3].innerHTML;
-        if (template.checked) {
+        if (template) {
             code = code.replaceAll('<####?->Intro will be copied here<-?####>', "% This is the introduction text \n \item " + clean(insertEscapes(intro)) + " \n");
         } else {
             code += "% This is the introduction text \n" + clean(insertEscapes(intro)) + " \n\n";
         }
+    }else if (template){
+        code = code.replaceAll('<####?->Intro will be copied here<-?####>', "");
     }
     if (preamble) {
         code += "\\newpage\n\n";
     }
     var questionText = "";
+
     for (let i = 0; i < questions.length; i++) {
         var question = questions[i].innerHTML.toString();
         //question = questions[i].innerText;
@@ -258,7 +263,7 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
             questionText += "\\fullwidth{" + textblock + "}\n";
         }
     }
-    if (template.checked) {
+    if (template) {
         code = code.replaceAll('<####?->Questions will be copied here<-?####>', questionText);
     } else {
         code += questionText;
@@ -274,12 +279,14 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
             while (conc.substring(idx, idx + 1) !== ">") {
                 idx++;
             }
-            if (template.checked) {
+            if (template) {
                 code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n");
             } else {
                 code += "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n";
             }
         }
+    }else if (template){
+        code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "");
     }
     //end of document
     if (preamble)
@@ -289,6 +296,7 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
         code = code.toString().replaceAll(/<[^<>]*?>\s?/g, "");
     code = code.toString().replaceAll('&lt;', '<');
     code = code.toString().replaceAll('&gt;', '>');
+
     var file = new File([code], 'latex.txt', {
         type: 'text/plain',
     })
@@ -328,19 +336,19 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
                     var start = j;
                     var styleStart = j + 8;
                     j = styleStart;
-                    while (qText.substring(j, j + 1) !== "\"")
+                    while (j<qText.length&&qText.substring(j, j + 1) !== "\"")
                         j++;
                     var textStart = j;
-                    while (qText.substring(textStart, textStart + 1) !== ">")
+                    while (textStart<qText.length&&qText.substring(textStart, textStart + 1) !== ">")
                         textStart++;
                     textStart++;
                     var textEnd = textStart;
-                    while (qText.substring(textEnd, textEnd + 2) !== "</")
+                    while (textEnd<qText.length&&qText.substring(textEnd, textEnd + 2) !== "</")
                         textEnd++;
                     var text = processStyle(qText.substring(styleStart, j), qText.substring(textStart, textEnd));
                     //    console.log(qText.substring(textStart, textEnd));
                     j = textEnd + 1;
-                    while (qText.substring(j, j + 1) !== ">")
+                    while (j<qText.length&&qText.substring(j, j + 1) !== ">")
                         j++;
                     qText = qText.substring(0, start).trimEnd() + ">" + text + qText.substring(j + 1);
                     //  console.log("style " + qText);
@@ -557,18 +565,18 @@ async function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, i
                     //   console.log('before: '+qText);
                     var spanStart = j;
                     var styleStart = j;
-                    while (qText.substring(styleStart, styleStart + 7) !== "style=\"")
+                    while (styleStart<qText.length&&qText.substring(styleStart, styleStart + 7) !== "style=\"")
                         styleStart++;
                     styleStart += 7;
                     j = styleStart;
-                    while (qText.substring(j, j + 1) !== "\"")
+                    while (j<qText.length&&qText.substring(j, j + 1) !== "\"")
                         j++;
                     var textStart = j;
-                    while (qText.substring(textStart, textStart + 1) !== ">")
+                    while (textStart<qText.length&&qText.substring(textStart, textStart + 1) !== ">")
                         textStart++;
                     textStart++;
                     var textEnd = textStart;
-                    while (qText.substring(textEnd, textEnd + 7) !== "</span>")
+                    while (textEnd<qText.length&&qText.substring(textEnd, textEnd + 7) !== "</span>")
                         textEnd++;
                     spanText = processStyle(qText.substring(styleStart, j), qText.substring(textStart, textEnd));
                     qText = qText.substring(0, spanStart) + spanText + qText.substring(textEnd + 7);
