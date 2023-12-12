@@ -67,6 +67,8 @@
         \underline{\hspace{10cm}}\\ \vspace{5mm}
     \fi
     Team Number: \underline{\hspace{10cm}}\\ \vspace{5mm}
+    % If you want to attribute yourself, uncomment the next line and add your name
+    %\textbf{Written by: (name)}
 \end{center}
 
 
