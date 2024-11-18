@@ -23,6 +23,7 @@ async function generateLaTeX(e) {
     var conclusion = document.getElementById("conclusion").checked;
     var images = document.getElementById("images").checked;
     var removeChevrons = document.getElementById("removeChevrons").checked;
+    var figures = document.getElementById("figures").checked;
     var selectall = document.getElementById("selectall").checked;
     var templateBoolean = template.checked;
     var templateText = await fetch("template.txt");
@@ -35,20 +36,20 @@ async function generateLaTeX(e) {
     chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: create,
-        args: [mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall, templateBoolean, templateText],
+        args: [mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, figures, selectall, templateBoolean, templateText],
     });
 }
 
-function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, selectall, template, templateText) {
+function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images, removeChevrons, figures, selectall, template, templateText) {
     var questions = document.getElementsByClassName("panel panel-default");
     var began = false;
     var code = "";
     if (template) {
         code = templateText;
     } else {
-        code = "% This text was generated using the ScilympiadToLaTeX extension on the Firefox Add-Ons Store at https://addons.mozilla.org/en-US/firefox/addon/scilympiadtolatex/ \n%This extension does not support math, different fonts, different paragraph spacings, or proper image placement. For instance, images might be on wrong pages and solution boxes may be incorrectly sized. Please look through the test and resize figures or add page breaks where needed.  \n" + (preamble ? "\\documentclass{exam}\n\\usepackage{graphicx}\n% You can remove the hyperref package if the test doesn't have hyperlinks \n\\usepackage{hyperref}\n\\usepackage[utf8]{fontenc}\n% You can remove setspace if you don't change the line spacing\n\\usepackage{setspace}\n" + (gradetable ? "\\usepackage{mhchem}\n" : "") + "\\addpoints\n\\begin{document}\n\n% This space is intentionally left blank for a title page.\n" : "% Please verify that \\usepackage{graphicx} (for images) " + (gradetable ? "and \\usepackage{mhchem} (for the gradetable resizing) are " : "is ") + "in the preamble if there are images within your test \n% Please verify that \\usepackage{hyperref} is in the preamble if there are hyperlinks within your test \n\n");
+        code = "% This text was generated using the ScilympiadToLaTeX extension on the Firefox Add-Ons Store at https://addons.mozilla.org/en-US/firefox/addon/scilympiadtolatex/ \n%This extension does not support math, different fonts, different paragraph spacings, or proper image placement. For instance, images might be on wrong pages and solution boxes may be incorrectly sized. Please look through the test and resize figures or add page breaks where needed.  \n" + (preamble ? "\\documentclass{exam}\n\\usepackage{graphicx}\n% You can remove the hyperref package if the test doesn't have hyperlinks \n\\usepackage{hyperref}\n% You can remove setspace if you don't change the line spacing\n\\usepackage{setspace}\n" + (gradetable ? "\\usepackage{mhchem}\n" : "") + "\\addpoints\n\\begin{document}\n\n% This space is intentionally left blank for a title page.\n" : "% Please verify that \\usepackage{graphicx} (for images) " + (gradetable ? "and \\usepackage{mhchem} (for the gradetable resizing) are " : "is ") + "in the preamble if there are images within your test \n% Please verify that \\usepackage{hyperref} is in the preamble if there are hyperlinks within your test \n\n");
         if (gradetable) {
-            code += "% The number of rows in the grade table is determined by the number of questions. You will probably need to adjust it to better fit the document.\n\\multirowgradetable{\\numpages/9}[pages]\n\n";
+            code += "% The number of rows in the grade table is determined by the number of questions. You will probably need to adjust it to better fit the document.\n\\multirowgradetable{\\the\\numexpr\\numpages/13+1}[pages]\n\n";
         }
     }
 
@@ -252,18 +253,20 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             }
             var LaTeX = "\\question[" + points + "] " + qText + "\n" + answer;
             // console.log(LaTeX);
-            LaTeX = LaTeX.toString().replaceAll('\"', '\\\"');
-            LaTeX = LaTeX.toString().replaceAll('&quot;', '\\\"');
-            LaTeX = LaTeX.toString().replaceAll('\'', '\\\'');
+            LaTeX = LaTeX.toString().replaceAll('&quot;', '"');
             questionText += LaTeX + "\n";
         }
         else {
             var textblock = clean(question);
+            if(figures)
             textblock = textblock.replaceAll(/(.*?)(\\[begind]{3,5}{[\w\s]*?})/g, "\n\\fullwidth{$1}$2");
-            questionText += textblock + "\n";
+            else
+                textblock = `\\fullwidth{\n${textblock}\n}`;
+            questionText += "\n" + textblock + "\n";
         }
     }
     if (template) {
+        questionText = questionText.replaceAll(/(\$[&`'])/g, "$$$1");
         code = code.replaceAll('<####?->Questions will be copied here<-?####>', questionText);
     } else {
         code += questionText;
@@ -274,13 +277,13 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
     if (conclusion) {
         var conc = document.getElementsByClassName("panel panel-success");
         if (conc.length > 0) {
-            conc = conc[0].innerHTML;
+            conc = conc[0].children[0].innerHTML;
             var idx = 0;
             while (conc.substring(idx, idx + 1) !== ">") {
                 idx++;
             }
             if (template) {
-                code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n");
+                code = code.replaceAll('<####?->Conclusion will be copied here<-?####>', "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))).replaceAll(/(\$[&`'])/g, "$$$1") + " \n\n");
             } else {
                 code += "\\newpage \n% This is the conclusion \n" + clean(insertEscapes(conc.substring(idx + 1))) + " \n\n";
             }
@@ -368,7 +371,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     j -= 5;
                 }
                 if (qText.substring(j, j + 4) === "</p>") {
-                    qText = qText.substring(0, j) + qText.substring(j + 4);
+                    qText = qText.substring(0, j) + "\n\n" + qText.substring(j + 4);
                     j -= 5;
                 }
                 if (qText.substring(j, j + 4) === "<ol>") {
@@ -380,7 +383,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     j -= 5;
                 }
                 if (qText.substring(j, j + 4) === "<li>") {
-                    qText = qText.substring(0, j) + "\\item " + qText.substring(j + 4);
+                    qText = qText.substring(0, j) + "\n\t\\item " + qText.substring(j + 4);
                     j -= 5;
                 }
                 if (qText.substring(j, j + 4) === "</b>" || qText.substring(j, j + 4) === "</i>" || qText.substring(j, j + 4) === "</u>") {
@@ -426,7 +429,10 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     var imgString = qText.substring(imgStart, imgEnd).split("/").pop();
                     if (images)
                         downloadImage("https://scilympiad.com" + qText.substring(imgStart, imgEnd));
-                    qText = qText.substring(0, j - 1) + "\\begin{figure}[!ht]\n\t\\centering\n\t\\includegraphics[width=.6\\textwidth,height=.3\\textheight,keepaspectratio]{" + imgString + "}\n\\end{figure}\n" + qText.substring(idx + 1);
+                    if(figures)
+                        qText = qText.substring(0, j - 1) + "\\begin{figure}[!ht]\n\t\\centering\n\t\\includegraphics[width=.6\\textwidth,height=.3\\textheight,keepaspectratio]{" + imgString + "}\n\\end{figure}\n" + qText.substring(idx + 1);
+                    else
+                        qText = qText.substring(0, j - 1) + "\\begin{center}\n\t\\includegraphics[width=.6\\textwidth,height=.3\\textheight,keepaspectratio]{" + imgString + "}\n\\end{center}\n" + qText.substring(idx + 1);
                     j -= 5;
                 }
 
@@ -460,7 +466,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
             }
             if (j + 1 < qText.length) {
                 if (qText.substring(j, j + 3) === "<p>") {
-                    qText = qText.substring(0, j) + qText.substring(j + 3);
+                    qText = qText.substring(0, j) + "\n" + qText.substring(j + 3);
                     j -= 4;
                 }
                 if (qText.substring(j, j + 3) === "<b>") {
@@ -510,14 +516,14 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                     j -= 7;
                 }
                 if (qText.substring(j, j + 6) === "<table") {
-                    var tableText = "\\\\\n\\begin{table}[h!]\n";
+                    var tableText = "\\\\\n"+((figures)?"\\begin{table}[h!]":"\\begin{center}")+"\n";
                     var end = j;
                     while (end < qText.length && qText.substring(end, end + 8) !== "</tbody>") {
                         end++;
                     }
                     var table = qText.substring(j + 43, end).split("<tr>");
                     var length = (table[1].split("<td>")).length - 1;
-                    tableText += "\\centering\n\\begin{tabular}{";
+                    tableText += ((figures)?"\\centering\n":"")+"\\begin{tabular}{";
                     while (length > 0) {
                         tableText += "|c";
                         length--;
@@ -531,12 +537,10 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                             else
                                 tableText += cells[cellnum].substring(0, cells[cellnum].length - 10);
                         }
-                        // table[t].replaceAll("<td>","");
-                        // table[t].replaceAll("</td>","");
-                        // table[t].replaceAll("</tr>","");
+
                         tableText += "\\\\\n\\hline\n";
                     }
-                    tableText += "\\end{tabular}\\\\\n\\end{table}\n";
+                    tableText += "\\end{tabular}\\\\"+((figures)?"\n\\end{table}":"\n\\end{center}")+"\n";
                     qText = qText.substring(0, j) + tableText + qText.substring(end + 16);
                     j -= 7;
                 }
@@ -623,7 +627,7 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
                 opens.push("}");
             }
             else if (style[0] === "font-size") {
-                style[1] = style[1].substring(style[1].length - 2);
+                style[1] = style[1].substring(0,style[1].length - 2)*1;
                 if (style[1] >= 24) {
                     latex += "\\begin{Huge}";
                     opens.push("\\end{Huge}");
@@ -692,24 +696,30 @@ function create(mc, ms, tf, sa, preamble, gradetable, intro, conclusion, images,
         qText = qText.toString().replaceAll('&Hat;', '\\textasciicircum');
         qText = qText.toString().replaceAll('{', '\\{');
         qText = qText.toString().replaceAll('}', '\\}');
-        qText = qText.toString().replaceAll('[', '\\[');
-        qText = qText.toString().replaceAll(']', '\\]');
+        qText = qText.toString().replaceAll(/([^_])_([^_])/g, "$1\\_$2");
+        qText = qText.toString().replaceAll('#', '\\#');
         qText = qText.toString().replaceAll('&num;', '\\#');
-        //    qText = qText.toString().replaceAll('&', '\\&');
+        // qText = qText.toString().replaceAll('&', '\\&');
         qText = qText.toString().replaceAll('&amp;', '\\&');
-        if (qText.includes("_")) {
+        qText = qText.toString().replaceAll('&nbsp;', '');
+        if (qText.includes("_")||qText.includes("   ")) {
             var count = 0;
             for (let i = 0; i < qText.length; i++) {
                 count = 0;
-                if (qText.substring(i, i + 1) === "_") {
+                if (qText.substring(i, i + 1) === "_"&&(i>0&&qText.substring(i-1, i) !== "\\")) {
                     while (qText.substring(i, i + 1) === "_") {
                         count++;
                         qText = qText.substring(0, i) + qText.substring(i + 1);
                     }
 
-                    qText = qText.substring(0, i) + "\\underline{\\hspace{" + Math.ceil(count / 3) + "cm}}" + qText.substring(i + 1);
+                    qText = qText.substring(0, i) + "\\underline{\\hspace{" + count + "ex}}" + qText.substring(i);
+                }else if (i<qText.length-1&&qText.substring(i, i + 2) === "  ") {
+                    while (qText.substring(i, i + 1) === " ") {
+                        count++;
+                        qText = qText.substring(0, i) + qText.substring(i + 1);
+                    }
+                    qText = qText.substring(0, i) + "\\hspace{" + count + "ex}" + qText.substring(i);
                 }
-                count = 0;
             }
         }
         return qText;

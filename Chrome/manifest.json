@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ScilympiadToLaTeX",
-  "version": "1.4.5",
+  "version": "1.4.8",
   "description": "Converts a scilympiad test into LaTeX code",
   "icons": {
     "48": "icons/stl logo.png",

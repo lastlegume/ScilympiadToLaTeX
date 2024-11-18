@@ -15,7 +15,7 @@
 \usepackage{setspace}
 
 % When not commented, \printanswers will show all of the answers to questions and change some other things
-%\printanswers
+% \printanswers
 
 % Change "Event" to the name of the event
 \newcommand{\event}{Event}
@@ -68,7 +68,7 @@
     \fi
     Team Number: \underline{\hspace{10cm}}\\ \vspace{5mm}
     % If you want to attribute yourself, uncomment the next line and add your name
-    %\textbf{Written by: (name)}
+    % \textbf{Written by: (name)}
 \end{center}
 
 
@@ -80,9 +80,8 @@
 \end{itemize}
 \begin{center}
 \textit{For grading use only}\\
-% The number of rows in the grade table is always one.  You will probably need to adjust it to better fit the document. 
-% A simple way to make it automatically update is to use \numpages/9 inside the braces ({}) with \usepackage[version=4]{mhchem} in the preamble. This is not very accurate because of the variance in question size, but it can serve as a starting point
-\multirowgradetable{1}[pages]    
+% The gradetable has a number of rows that automatically updates. This is not very accurate because of the variance in question size, but it can serve as a starting point. You will probably need to manually update the number of rows of the gradetable (change '\the\numexpr\numpages/13+1' to the desired number of rows).
+\multirowgradetable{\the\numexpr\numpages/13+1}[pages]
 \end{center}
 
 \newpage
